@@ -29,6 +29,7 @@ int main() {
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 /**
  * easy reference
@@ -93,6 +94,17 @@ typename stack_top$_##typename##_$ (const stack(typename) * const this) {       
 /**
  * test
  */
-stack_def(int)
+//stack_def(int)
+
+//#define _STACK_TEMPLATE_(typename) typedef \
+//struct STACK_$##typename##$                \
+//{                                          \
+//    typename element;                      \
+//    struct STACK_$##typename##$ *next;     \
+//} stack(typename); \
+//
+//#define stack_instantiation(typename) _STACK_TEMPLATE_(typename)
+//
+//stack_instantiation(char)
 
 #endif //DATASTRUCT01_YMSTACK_H

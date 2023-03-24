@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
 #include "lib/ymStack.h"
 #include "lib/ymSeqList.h"
+#include "lib/ymString.h"
 
 stack_def(char)
 
