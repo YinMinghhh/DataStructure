@@ -10,11 +10,11 @@
 #include <ctype.h>
 
 typedef struct {
-    ymString_t *infix_expression;   /* 前缀表达式 */
-    ymString_t *postfix_expression; /* 后缀表达式 */
-    ymStack_t(uint8)     *op_stack;
-    ymStack_t(double)   *res_stack;
-    double result;
+    ymString_t *infix_expression;   /* 中缀表达式串 */
+    ymString_t *postfix_expression; /* 后缀表达式串 */
+    ymStack_t(uint8)     *op_stack; /* 操作符栈,仅在中缀转后缀时使用 */
+    ymStack_t(double)   *res_stack; /* 操作数栈,仅在求解后缀式时使用 */
+    double result;                  /* 求解后缀式后得出的结果 */
 } ReversePolishNotation_t;
 
 
@@ -70,7 +70,8 @@ static double ReversePolishNotation_solve(ReversePolishNotation_t *const this)
     char *p_ptr = NULL;
     for (int i = 0; i < this->postfix_expression->length; ++i, ++ptr) {
         unsigned char ch = *ptr;
-        if (isdigit(ch)) {
+        if (isdigit(ch) || ( (ch == '-' || ch =='+') && isdigit(*(ptr + 1)))) {
+//            对数字处理, 考虑特殊情况下带有正负号的数字
             ymStack(double).push(this->res_stack, strtod((char*)ptr, &p_ptr));
             ptr = (unsigned char *)p_ptr;
         } else if (ReversePolishNotation_priority(ch)) {
@@ -91,9 +92,11 @@ static double ReversePolishNotation_solve(ReversePolishNotation_t *const this)
 
 static void ReversePolishNotation_InfixToPostfix(ReversePolishNotation_t *const this)
 {
+    unsigned char last_ch = '\0';
     for (size_t i = 0; i < this->infix_expression->length; i++) {
         unsigned char ch = *(this->infix_expression->ptr + i);
         if (isdigit(ch)) {
+//            数字字符的处理,直接加入后缀表达式串
             ymString.append(this->postfix_expression, ch);
         } else {
             switch (ch) {
@@ -101,6 +104,8 @@ static void ReversePolishNotation_InfixToPostfix(ReversePolishNotation_t *const 
                     ymStack(uint8).push(this->op_stack, ch);
                     break;
                 case ')':
+//                    遇到右括号')'弹运算符栈入后缀表达式串,直到弹出第一个左括号'(',但左括号不入表达式串,且右括号不入运算符栈
+//                    同时给后缀表达式字符串加一个空格' ',因为在中缀表达式中,右括号的左边必定是一个运算数的结尾
                     while (!ymStack(uint8).empty(this->op_stack) && ymStack(uint8).top(this->op_stack) != '(') {
                         ymString.append(this->postfix_expression, ' ');
                         ymString.append(this->postfix_expression, ymStack(uint8).pop(this->op_stack));
@@ -109,7 +114,16 @@ static void ReversePolishNotation_InfixToPostfix(ReversePolishNotation_t *const 
                     break;
                 default:
                     if (ReversePolishNotation_priority(ch)) {
-                        /* + - * / */
+                        /* '+' '-' '*' '/' */
+                        if (ch == '-' || ch == '+') {    // '+','-'作为正负号时的处理
+                            if (!isdigit(last_ch)) {
+                                if (ch == '-') ymString.append(this->postfix_expression, ch);
+                                else;   // 只标明负号, 正号不处理
+                                break;
+                            }
+                        } else;
+//                        遇到加减乘除'+' '-' '*' '/'运算符,弹运算符栈入后缀表达式串,至栈顶运算符优先级小于ch或清空栈为止,再压入ch
+//                        同时给后缀表达式字符串加一个空格' ',因为在中缀表达式中,这些双目运算符的左边必定是一个运算数的结尾
                         while (
                                 !ymStack(uint8).empty(this->op_stack) &&
                                 ReversePolishNotation_priority(ymStack(uint8).top(this->op_stack)) >=
@@ -121,9 +135,12 @@ static void ReversePolishNotation_InfixToPostfix(ReversePolishNotation_t *const 
                         }
                         ymString.append(this->postfix_expression, ' ');
                         ymStack(uint8).push(this->op_stack, ch);
-                    } else;
+                    } else if (ch == '.') {     // 小数点'.'的处理,直接加入后缀表达式字符串
+                        ymString.append(this->postfix_expression, ch);
+                    } else continue;
             }
         }
+        last_ch = ch;
     }
     while (!ymStack(uint8).empty(this->op_stack)) {
         ymString.append(this->postfix_expression, ' ');

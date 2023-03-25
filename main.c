@@ -9,7 +9,7 @@ int main(int argc, char **argv) {
     ReversePolishNotation.solve(object);
     printf("the result is %lf\n", object->result);
 
-    putchar('\n');
+//    putchar('\n');
     system("pause");
     return 0;
 }
