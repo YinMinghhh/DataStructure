@@ -1,3 +1,6 @@
-//
-// Created by 28197 on 2023/3/21.
-//
+#include "ReversePolishNotation.h"
+const ReversePolishNotation_fun ReversePolishNotation = {
+        .init   =   ReversePolishNotation_init,
+        .gets   =   ReversePolishNotation_infix_gets,
+        .InfixToPostfix =   InfixToPostfix,
+};

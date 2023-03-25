@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <limits.h>
 
+#define STRING_DEFAULT_DELTA_CAPACITY ((size_t) 10)
+
 struct StringUtil_functions;
 typedef struct StringUtil_functions StringUtil_functions;
 
@@ -28,48 +30,44 @@ typedef struct StringUtil_functions StringUtil_functions;
  * @note    1. 没写自动缩容功能, 在意空间可以destruct掉,  重新init
  * @note    2. 注意存的字符都是 unsigned char
  */
-typedef struct ymString {
+typedef struct {
     unsigned char *ptr;
     size_t length;
     size_t capacity;
 //    const StringUtil_functions *vptr;
 } ymString_t;
 
-static ymString_t * init    (ymString_t *this, size_t capacity);
-static bool StrPuts (const ymString_t *this);
-static bool empty   (const ymString_t *this);
-static bool clear   (ymString_t *this, size_t capacity);
-static bool StrGets (ymString_t *this);
-static bool StrCat  (ymString_t *this, unsigned char str[]);
-static void destructor  (ymString_t *this);
+static ymString_t * ymString_init    (ymString_t *this, size_t capacity);
+static bool ymString_puts   (const ymString_t *this);
+static bool ymString_empty  (const ymString_t *this);
+static bool ymString_clear  (ymString_t *this, size_t capacity);
+static bool ymString_gets   (ymString_t *this);
+static bool ymString_StrCat (ymString_t *this, unsigned char str[]);
+static bool ymString_append (ymString_t *this, unsigned char element);
+static void ymString_destructor (ymString_t *this);
 
-struct {
-    ymString_t*    (*init)     (ymString_t*, size_t);
-    bool    (*puts)     (const ymString_t*);
-    bool    (*empty)    (const ymString_t*);
-    bool    (*clear)    (ymString_t*, size_t);
-    bool    (*gets)     (ymString_t*);
-    bool    (*cat)      (ymString_t*, unsigned char[]);
-    void    (*destruct) (ymString_t*);
-} ymString = {
-        .init   = init,
-        .puts   = StrPuts,
-        .empty  = empty,
-        .clear  = clear,
-        .gets   = StrGets,
-        .cat    = StrCat,
-        .destruct = destructor,
-};
+typedef struct {
+    ymString_t*    (*init)      (ymString_t*, size_t);
+    bool    (*const puts)       (const ymString_t*);
+    bool    (*const empty)      (const ymString_t*);
+    bool    (*const clear)      (ymString_t*, size_t);
+    bool    (*const gets)       (ymString_t*);
+    bool    (*const cat)        (ymString_t*, unsigned char[]);
+    bool    (*const append)     (ymString_t*, unsigned char);
+    void    (*const destruct)   (ymString_t*);
+} ymString_fun;
+
+extern const ymString_fun ymString;
 
 /**
- * @brief StringUtil对象初始化
- * @param this
- * @param capacity  容量, 不知道给几就给0, 后面函数遇到容量不足会自动扩充
- * @return
- * @note    1. 进入此函数前必须将this提前置为NULL, 否则认为出现第2条的错误
- * @note    2. 已经经过此函数初始化过的this禁止再次初始化, 否则造成内存泄漏(已处理此错误)
- */
-static ymString_t *init (ymString_t * this, size_t capacity)
+* @brief StringUtil对象初始化
+* @param this
+* @param capacity  容量, 不知道给几就给0, 后面函数遇到容量不足会自动扩充
+* @return
+* @note    1. 进入此函数前必须将this提前置为NULL, 否则认为出现第2条的错误
+* @note    2. 已经经过此函数初始化过的this禁止再次初始化, 否则造成内存泄漏(已处理此错误)
+*/
+static ymString_t *ymString_init (ymString_t * this, size_t capacity)
 {
     if (this != NULL) goto ReInitError;
     else;
@@ -87,7 +85,7 @@ static ymString_t *init (ymString_t * this, size_t capacity)
     fprintf(stderr, "Error %s %s : malloc error\n", __FILE__, __FUNCTION__ );
     goto finally;
     ReInitError:
-    fprintf(stderr, "Error %s %s : do not init again\n", __FILE__, __FUNCTION__ );
+    fprintf(stderr, "Error %s %s : do not ymString_init again\n", __FILE__, __FUNCTION__ );
     goto finally;
     finally:
     exit(EXIT_FAILURE);
@@ -99,7 +97,7 @@ static ymString_t *init (ymString_t * this, size_t capacity)
  * @param capacity  新的容量. \n 如果不希望改变原来的容量请使用this->capacity.
  * @return
  */
-static bool clear (ymString_t *const this, size_t capacity)
+static bool ymString_clear (ymString_t *const this, size_t capacity)
 {
     if (capacity != this->capacity) {
         if (this->ptr != NULL) {
@@ -126,17 +124,17 @@ static bool clear (ymString_t *const this, size_t capacity)
  * @note    1. 如果读入串的长度大于this的容量, 那么容量被重设为读入串的长度, 否则容量不变
  * @note    2. 如果this里原本储存有字符串, 原内容会被擦除
  */
-static bool StrGets (ymString_t *const this)
+static bool ymString_gets (ymString_t *const this)
 {
-    char *p = (char *) malloc(sizeof (char));
+    char *p = (char *) malloc(sizeof (char) * 1000);
     if (p == NULL) goto MallocError;
     else;
     scanf("%[^\n]", p);
     size_t len = strlen(p);
     if (len > this->capacity) {
-        clear(this, len);
+        ymString_clear(this, len);
     } else {
-        clear(this, this->capacity);
+        ymString_clear(this, this->capacity);
     }
     this->length = len;
     for (int i = 0; i < len; ++i) {
@@ -156,23 +154,23 @@ static bool StrGets (ymString_t *const this)
  * @param this
  * @return
  */
-static bool StrPuts (const ymString_t *const this)
+static bool ymString_puts (const ymString_t *const this)
 {
-    if (empty(this)) goto EmptyError;
+    if (ymString_empty(this)) goto EmptyError;
     else;
     puts( (char *)this->ptr);
     return true;
     EmptyError:
-    fprintf( stderr, "Error %s %s: empty string error", __FILE__, __FUNCTION__ );
+    fprintf( stderr, "Error %s %s: ymString_empty string error", __FILE__, __FUNCTION__ );
     return false;
 }
 
-static bool empty(const ymString_t *const this)
+static bool ymString_empty(const ymString_t *const this)
 {
     return !this->length;
 }
 
-static bool StrCat (ymString_t *const this, unsigned char str[])
+static bool ymString_StrCat (ymString_t *this, unsigned char str[])
 {
     size_t str_length = strlen( (char *) str);
     size_t tot_length = this->length + str_length;
@@ -187,21 +185,39 @@ static bool StrCat (ymString_t *const this, unsigned char str[])
     return true;
 
     ReAllocError:
-    fprintf( stderr, "Error %s %s: reAlloc error", __FILE__, __FUNCTION__);
+    fprintf( stderr, "Error %s %s: reallocate error", __FILE__, __FUNCTION__);
     exit(EXIT_FAILURE);
 }
 
-static bool append (ymString_t *const this, unsigned char element)
+static bool ymString_append (ymString_t *const this, unsigned char element)
 {
-//    还没写
+    if (this->length == this->capacity) {
+        this->ptr = (unsigned char *) realloc(
+                this->ptr,
+                sizeof (unsigned char ) * (this->capacity + STRING_DEFAULT_DELTA_CAPACITY)
+                );
+        if (this->ptr == NULL) goto ReAllocError;
+        else this->capacity += STRING_DEFAULT_DELTA_CAPACITY;
+        for (size_t i = this->length + 1; i < this->capacity + 1; ++i) {
+            *(this->ptr + i) = '\0';
+        }
+    }
+    *(this->ptr + this->length) = element;
+    this->length += 1;
     return true;
+
+    ReAllocError:
+    fprintf( stderr, "Error %s %s: reallocate error\n", __FILE__, __FUNCTION__ );
+    goto finally;
+    finally:
+    exit(EXIT_FAILURE);
 }
 
 /**
  * @brief 析构函数, 释放资源
  * @param this
  */
-static void destructor (ymString_t *this)
+static void ymString_destructor (ymString_t *this)
 {
     if (this != NULL) {
         if (this->ptr != NULL) {

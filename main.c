@@ -1,14 +1,11 @@
-#include "lib/ymStack.h"
-#include "lib/ymString.h"
+#include "APP/ReversePolishNotation.h"
 
 int main(int argc, char **argv) {
-    ymString_t *buffer = NULL, *expression = NULL;
-    expression  =   ymString.init(expression, 10);
-    buffer      =   ymString.init(buffer, 10);
-    ymString.gets(expression);
-//    ymString.puts(expression);
-
-    ;
+    ReversePolishNotation_t *object = NULL;
+    object = ReversePolishNotation.init(object);
+    ReversePolishNotation.gets(object);
+    ReversePolishNotation.InfixToPostfix(object);
+    ymString.puts(object->postfix_expression);
     putchar('\n');
     system("pause");
     return 0;

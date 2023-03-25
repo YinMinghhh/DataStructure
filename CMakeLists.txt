@@ -3,4 +3,4 @@ project(DataStructure C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(DataStruct01 main.c lib/ymStack.h lib/ymSeqList.h APP/ReversePolishNotation.h APP/ReversePolishNotation.c lib/ymString.h)
+add_executable(DataStruct01 main.c lib/ymStack.h lib/ymSeqList.h APP/ReversePolishNotation.h APP/ReversePolishNotation.c lib/ymString.h lib/ymString.c lib/ymStack.c)

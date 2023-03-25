@@ -22,7 +22,7 @@ int main() {
 #ifndef DATASTRUCT01_YMSTACK_H
 #define DATASTRUCT01_YMSTACK_H
 
-#pragma message ("compiling ymStack.h ...")
+//#pragma message ("compiling ymStack.h ...")
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -31,80 +31,15 @@ int main() {
 #include <errno.h>
 #include <string.h>
 
-///**
-// * easy reference
-// */
-//#define _stack(typename) _stack$_##typename##_$
-//#define stack(typename) _stack(typename)
-//
-///**
-// * template
-// */
-//#define _stack_DEF(typename) typedef        \
-//struct stack$_##typename##_$ {              \
-//    typename element;                       \
-//    struct stack$_##typename##_$ * next;    \
-//} stack(typename);                          \
-//                                            \
-//void stack_init$_##typename##_$ (stack(typename) * const this) {                    \
-//    this->next = NULL;}                     \
-//    \
-//bool stack_push$_##typename##_$ (stack(typename) * const this, typename element) {  \
-//    stack(typename) * node = (stack(typename) *)malloc(sizeof (stack(typename)));   \
-//    if (node == NULL) {                     \
-//        fprintf(stderr, "Value of errno: %d\n", errno);                             \
-//        fprintf(stderr, "Error stack_push(%s): %s\n", #typename, strerror(errno));  \
-//        exit(EXIT_FAILURE);                 \
-//    }                                       \
-//    node->element = element;                \
-//    node->next = this->next;                \
-//    this->next = node;                      \
-//    return true;}                           \
-//    \
-//bool stack_empty$_##typename##_$ (const stack(typename) * const this) {             \
-//    return this->next == NULL;}             \
-//    \
-//typename stack_pop$_##typename##_$ (stack(typename) * const this) {                 \
-//    stack(typename) * temp_node = this->next;                    \
-//    typename temp_element = temp_node->element;                  \
-//    this->next = this->next->next;          \
-//    free(temp_node);                        \
-//    return temp_element;}                   \
-//    \
-//typename stack_top$_##typename##_$ (const stack(typename) * const this) {           \
-//    if (!stack_empty(typename)(this))       \
-//        return this->next->element;         \
-//    else {                                  \
-//        fprintf(stderr, "Value of errno: %d\n", errno);                             \
-//        fprintf(stderr, "Error stack_top(%s): %s\n", #typename, strerror(errno));   \
-//        exit(EXIT_FAILURE);                 \
-//    }}
-//
-//#define stack_def(typename) _stack_DEF(typename)
-//
-///**
-// * easy references for functions
-// */
-//#define stack_init(typename) stack_init$_##typename##_$
-//#define stack_push(typename) stack_push$_##typename##_$
-//#define stack_empty(typename) stack_empty$_##typename##_$
-//#define stack_pop(typename) stack_pop$_##typename##_$
-//#define stack_top(typename) stack_top$_##typename##_$
-//
-///**
-// * test
-// */
-////stack_def(int)
-
 #define ymStack_t(typename) STACK_$##typename##$
-#define ymStack(typename)   STACK_fun_$##typename##$
+#define ymStack_fun(typename)   STACK_fun_$##typename##$
+#define ymStack(typename)   ymStack_$##typename##$
 
 #define ymStack_init(typename)  ymStack_$##typename##$_init
 #define ymStack_push(typename)  ymStack_$##typename##$_push
 #define ymStack_empty(typename) ymStack_$##typename##$_empty
 #define ymStack_top(typename)   ymStack_$##typename##$_top
 #define ymStack_pop(typename)   ymStack_$##typename##$_pop
-
 
 #define _STACK_TEMPLATE_(typename) typedef \
 struct STACK_$##typename##$                \
@@ -121,25 +56,34 @@ static typename ymStack_$##typename##$_top(const ymStack_t(typename) * this);   
 static typename ymStack_$##typename##$_pop(ymStack_t(typename) * this);              \
 \
                                            \
-struct {                                   \
-    ymStack_t(typename) *(*init)(ymStack_t(typename)*);                              \
-    bool    (*push)     (ymStack_t(typename)*, typename);                            \
-    bool    (*empty)    (const ymStack_t(typename)*);                                \
-    typename(*top)      (const ymStack_t(typename)*);                                \
-    typename(*pop)      (ymStack_t(typename)*);                                      \
+typedef const struct {                             \
+    ymStack_t(typename) *(*const init)(ymStack_t(typename)*);                        \
+    bool    (*const push)     (ymStack_t(typename)*, typename);                      \
+    bool    (*const empty)    (const ymStack_t(typename)*);                          \
+    typename(*const top)      (const ymStack_t(typename)*);                          \
+    typename(*const pop)      (ymStack_t(typename)*);                                \
     \
-} ymStack(typename) = {                    \
-    .init   =   ymStack_init    (typename),\
-    .push   =   ymStack_push    (typename),\
-    .empty  =   ymStack_empty   (typename),\
-    .top    =   ymStack_top     (typename),\
-    .pop    =   ymStack_pop     (typename),\
-};                       \
+} ymStack_fun(typename);                   \
                                            \
-static ymStack_t(typename) *ymStack_$##typename##$_init (ymStack_t(typename) *const this) \
+extern const ymStack_fun(typename) ymStack(typename);                                \
+                                           \
+static ymStack_t(typename) *ymStack_$##typename##$_init (ymStack_t(typename) *this)  \
 {                                          \
+    if (this != NULL) goto ReInitError;    \
+    else;                                  \
+    this = (ymStack_t(typename) *)malloc(sizeof(ymStack_t(typename)));                \
+    if (this == NULL) goto MallocError;    \
+    else;                                  \
     this->next = NULL;                     \
     return this;                           \
+                                           \
+    ReInitError:                           \
+    fprintf( stderr, "Error %s %s: re init error\n", __FILE__, __FUNCTION__ );         \
+    goto finally;                          \
+    MallocError:                           \
+    fprintf( stderr, "Error %s %s: malloc error\n", __FILE__, __FUNCTION__ );        \
+    finally:                               \
+    exit(EXIT_FAILURE);                    \
 }                                          \
                                            \
 static bool ymStack_$##typename##$_push(ymStack_t(typename) *const this, typename element)\
@@ -172,7 +116,7 @@ static typename ymStack_$##typename##$_top(const ymStack_t(typename) *const this
     } else goto EmptyStackError;           \
                                            \
     EmptyStackError:                       \
-    fprintf( stderr, "Error %s %s: empty stack error\n", __FILE__, __FUNCTION__ );        \
+    fprintf( stderr, "Error %s %s: ymString_empty stack error\n", __FILE__, __FUNCTION__ );        \
     goto finally;                          \
     finally:                               \
     exit(EXIT_FAILURE);                    \
@@ -190,7 +134,7 @@ static typename ymStack_$##typename##$_pop(ymStack_t(typename) *const this)     
     return tmp_element;                    \
                                            \
     EmptyStackError:                       \
-    fprintf( stderr, "Error %s %s: empty stack error\n", __FILE__, __FUNCTION__ );        \
+    fprintf( stderr, "Error %s %s: ymString_empty stack error\n", __FILE__, __FUNCTION__ );        \
     goto finally;                          \
     finally:                               \
     exit(EXIT_FAILURE);                    \
@@ -198,10 +142,11 @@ static typename ymStack_$##typename##$_pop(ymStack_t(typename) *const this)     
 
 
 #define stack_instantiation(typename) _STACK_TEMPLATE_(typename)
-
-stack_instantiation(char)
-stack_instantiation(int)
-stack_instantiation(float)
+typedef unsigned char   uint8;
+stack_instantiation(uint8)
+//stack_instantiation(char)
+//stack_instantiation(int)
+//stack_instantiation(float)
 stack_instantiation(double)
 
 //#undef ymStack_empty
