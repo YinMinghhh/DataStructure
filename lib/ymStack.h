@@ -116,7 +116,7 @@ static typename ymStack_$##typename##$_top(const ymStack_t(typename) *const this
     } else goto EmptyStackError;           \
                                            \
     EmptyStackError:                       \
-    fprintf( stderr, "Error %s %s: ymString_empty stack error\n", __FILE__, __FUNCTION__ );        \
+    fprintf( stderr, "Error %s %s: empty stack error\n", __FILE__, __FUNCTION__ );   \
     goto finally;                          \
     finally:                               \
     exit(EXIT_FAILURE);                    \
@@ -134,7 +134,7 @@ static typename ymStack_$##typename##$_pop(ymStack_t(typename) *const this)     
     return tmp_element;                    \
                                            \
     EmptyStackError:                       \
-    fprintf( stderr, "Error %s %s: ymString_empty stack error\n", __FILE__, __FUNCTION__ );        \
+    fprintf( stderr, "Error %s %s: empty stack error\n", __FILE__, __FUNCTION__ );   \
     goto finally;                          \
     finally:                               \
     exit(EXIT_FAILURE);                    \
