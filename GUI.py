@@ -1,4 +1,5 @@
 from tkinter import *
+import subprocess
 
 
 class Calculator:
@@ -7,6 +8,7 @@ class Calculator:
         self.master.title("Calculator")
         self.master.resizable(0, 0)  # 设置窗口不可拉伸
         self.master.geometry('320x420')  # 设置主窗口的初始尺寸
+        self.master.iconbitmap('Marigold.ico')
 
         self.result = StringVar()  # 用于显示结果的可变文本
         self.equation = StringVar()  # 显示计算方程
@@ -101,15 +103,43 @@ class Calculator:
     def run(self):
         temp_equ = self.equation.get()
         temp_equ = temp_equ.replace('÷', '/')
-        print(temp_equ)
-        if temp_equ[0] in ['+', '-', '*', '÷']:
-            temp_equ = '0' + temp_equ
-            print(temp_equ)
-        try:
-            answer = '%.4f' % eval(temp_equ)  # 保留两位小数
-            self.result.set(str(answer))
-        except (ZeroDivisionError, SyntaxError):  # 其他除0错误，或语法错误返回Error
-            self.result.set(str('Error'))
+        # print(temp_equ)
+
+        # 调用C形成的可执行文件求解
+        solve = subprocess.Popen(([r"cmake-build-debug/DataStructure.exe", "-GUI", temp_equ]),
+                                 stdin=None,
+                                 stdout=subprocess.PIPE,
+                                 stderr=None,
+                                 )
+        return_code = solve.wait()
+
+        answer = solve.stdout.readline().replace(b'\r', b'').replace(b'\n', b'')
+        answer = str(answer, encoding="utf-8")
+        # error = solve.stdout.readline().replace(b'\r', b'').replace(b'\n', b'')
+        # error = str(error, encoding="utf-8")
+        if return_code == 0:
+            print(answer)
+            self.result.set(answer)
+        else:
+            # print(error)
+            self.result.set("Error")
+
+        # print("answer:" + answer)
+        # if error:
+        #     print(error)
+        #     print("exit code:" + str(return_code))
+        # solve.kill()
+
+        # # 让python求解
+        # if temp_equ[0] in ['+', '-', '*', '÷']:
+        #     temp_equ = '0' + temp_equ
+        #     print(temp_equ)
+        # try:
+        #     answer = '%.4f' % eval(temp_equ)  # 保留两位小数
+        #     # print(answer)
+        #     self.result.set(str(answer))
+        # except (ZeroDivisionError, SyntaxError):  # 其他除0错误，或语法错误返回Error
+        #     self.result.set(str('Error'))
 
 
 if __name__ == "__main__":
