@@ -42,7 +42,8 @@ static bool ymString_puts   (const ymString_t *this);
 static bool ymString_empty  (const ymString_t *this);
 static bool ymString_clear  (ymString_t *this, size_t capacity);
 static bool ymString_gets   (ymString_t *this);
-static bool ymString_StrCat (ymString_t *this, unsigned char str[]);
+static bool ymString_StrCat (ymString_t *this, const unsigned char str[]);
+static bool ymString_StrCpy (ymString_t *this, const unsigned char str[]);
 static bool ymString_append (ymString_t *this, unsigned char element);
 static void ymString_destructor (ymString_t *this);
 
@@ -52,8 +53,9 @@ typedef struct {
     bool    (*const empty)      (const ymString_t*);
     bool    (*const clear)      (ymString_t*, size_t);
     bool    (*const gets)       (ymString_t*);
-    bool    (*const cat)        (ymString_t*, unsigned char[]);
-    bool    (*const append)     (ymString_t*, unsigned char);
+    bool    (*const cat)        (ymString_t*, const unsigned char[]);
+    bool    (*const cpy)        (ymString_t*, const unsigned char[]);
+    bool    (*const append)     (ymString_t*, const unsigned char);
     void    (*const destruct)   (ymString_t*);
 } ymString_fun;
 
@@ -170,7 +172,7 @@ static bool ymString_empty(const ymString_t *const this)
     return !this->length;
 }
 
-static bool ymString_StrCat (ymString_t *this, unsigned char str[])
+static bool ymString_StrCat (ymString_t *this, const unsigned char str[])
 {
     size_t str_length = strlen( (char *) str);
     size_t tot_length = this->length + str_length;
@@ -186,10 +188,33 @@ static bool ymString_StrCat (ymString_t *this, unsigned char str[])
 
     ReAllocError:
     fprintf( stderr, "Error %s %s: reallocate error", __FILE__, __FUNCTION__);
+    goto finally;
+    finally:
     exit(EXIT_FAILURE);
 }
 
-static bool ymString_append (ymString_t *const this, unsigned char element)
+static bool ymString_StrCpy (ymString_t *this, const unsigned char str[])
+{
+    size_t str_length = strlen((char*)str);
+    if (str_length > this->capacity) {
+        free(this->ptr);
+        this->ptr = (unsigned char *) malloc(sizeof (unsigned char ) * (str_length + 1));
+        if (this->ptr == NULL) goto MallocError;
+        memset(this->ptr, '\0', str_length + 1);
+        this->capacity = str_length;
+    }
+    strcpy((char*)this->ptr, (char*)str);
+    this->length = str_length;
+    return true;
+
+    MallocError:
+    fprintf( stderr, "Error %s %s: malloc error", __FILE__, __FUNCTION__);
+    goto finally;
+    finally:
+    exit(EXIT_FAILURE);
+}
+
+static bool ymString_append (ymString_t *const this, const unsigned char element)
 {
     if (this->length == this->capacity) {
         this->ptr = (unsigned char *) realloc(

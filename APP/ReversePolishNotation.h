@@ -25,12 +25,14 @@ static ReversePolishNotation_t *ReversePolishNotation_init(ReversePolishNotation
 static bool ReversePolishNotation_infix_gets      (ReversePolishNotation_t *this);
 static void ReversePolishNotation_InfixToPostfix  (ReversePolishNotation_t *this);
 static double ReversePolishNotation_solve(ReversePolishNotation_t *this);
+static void ReversePolishNotation_destruct(ReversePolishNotation_t *this);
 
 typedef struct {
     ReversePolishNotation_t* (*init)(ReversePolishNotation_t*);
     bool    (*const gets)           (ReversePolishNotation_t*);
     void    (*const InfixToPostfix) (ReversePolishNotation_t*);
     double  (*const solve)          (ReversePolishNotation_t*);
+    void    (*const destruct)       (ReversePolishNotation_t*);
 } ReversePolishNotation_fun;
 
 extern const ReversePolishNotation_fun ReversePolishNotation;
@@ -146,6 +148,24 @@ static void ReversePolishNotation_InfixToPostfix(ReversePolishNotation_t *const 
         ymString.append(this->postfix_expression, ' ');
         ymString.append(this->postfix_expression, ymStack(uint8).pop(this->op_stack));
     }
+}
+
+static void ReversePolishNotation_destruct(ReversePolishNotation_t *this)
+{
+    if (this != NULL) {
+        if (this->infix_expression != NULL) {
+            ymString.destruct(this->infix_expression);
+        } else;
+        if (this->postfix_expression != NULL) {
+            ymString.destruct(this->postfix_expression);
+        } else;
+        if (this->op_stack != NULL) {
+            ymStack(uint8).destruct(this->op_stack);
+        } else;
+        if (this->res_stack != NULL) {
+            ymStack(double).destruct(this->res_stack);
+        } else;
+    } else;
 }
 
 //  私有的"成员函数"

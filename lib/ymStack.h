@@ -40,6 +40,7 @@ int main() {
 #define ymStack_empty(typename) ymStack_$##typename##$_empty
 #define ymStack_top(typename)   ymStack_$##typename##$_top
 #define ymStack_pop(typename)   ymStack_$##typename##$_pop
+#define ymStack_destruct(typename)  ymStack_$##typename##$_destruct
 
 #define _STACK_TEMPLATE_(typename) typedef \
 struct STACK_$##typename##$                \
@@ -54,6 +55,7 @@ static bool ymStack_$##typename##$_push(ymStack_t(typename) *this, typename elem
 static bool ymStack_$##typename##$_empty(const ymStack_t(typename) * this);          \
 static typename ymStack_$##typename##$_top(const ymStack_t(typename) * this);        \
 static typename ymStack_$##typename##$_pop(ymStack_t(typename) * this);              \
+static void ymStack_$##typename##$_destruct(ymStack_t(typename) *this);\
 \
                                            \
 typedef const struct {                             \
@@ -62,6 +64,7 @@ typedef const struct {                             \
     bool    (*const empty)    (const ymStack_t(typename)*);                          \
     typename(*const top)      (const ymStack_t(typename)*);                          \
     typename(*const pop)      (ymStack_t(typename)*);                                \
+    void    (*const destruct) (ymStack_t(typename)*);                                \
     \
 } ymStack_fun(typename);                   \
                                            \
@@ -138,6 +141,12 @@ static typename ymStack_$##typename##$_pop(ymStack_t(typename) *const this)     
     goto finally;                          \
     finally:                               \
     exit(EXIT_FAILURE);                    \
+}                                          \
+                                           \
+static void ymStack_$##typename##$_destruct(ymStack_t(typename) *this)               \
+{                                          \
+    while(!ymStack_empty(typename)) { ymStack_pop(typename)(this); }                 \
+    if (this != NULL) { free(this); this = NULL; }                                   \
 }\
 
 

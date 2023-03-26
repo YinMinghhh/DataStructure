@@ -4,4 +4,5 @@ const ReversePolishNotation_fun ReversePolishNotation = {
         .gets   =   ReversePolishNotation_infix_gets,
         .InfixToPostfix =   ReversePolishNotation_InfixToPostfix,
         .solve  =   ReversePolishNotation_solve,
+        .destruct = ReversePolishNotation_destruct,
 };
