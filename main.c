@@ -25,8 +25,11 @@ int main(int argc, char **argv) {
         printf("请输入中缀表达式:");
         ReversePolishNotation.gets(object);
         ReversePolishNotation.InfixToPostfix(object);
+        ReversePolishNotation.InfixToPrefix(object);
         printf("后缀表达式是:");
         ymString.puts(object->postfix_expression);
+//        printf("前缀表达式是:");
+//        ymString.puts(object->prefix_expression);
         ReversePolishNotation.solve(object);
         printf("结果是:%g\n", object->result);
     }

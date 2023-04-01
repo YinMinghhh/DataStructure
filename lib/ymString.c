@@ -8,6 +8,8 @@ const ymString_fun ymString = {
         .gets   = ymString_gets,
         .cat    = ymString_StrCat,
         .cpy    = ymString_StrCpy,
+        .reverse= ymString_reverse,
         .append = ymString_append,
+        .delChar= ymString_DelChar,
         .destruct = ymString_destructor,
 };

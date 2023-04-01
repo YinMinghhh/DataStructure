@@ -44,7 +44,9 @@ static bool ymString_clear  (ymString_t *this, size_t capacity);
 static bool ymString_gets   (ymString_t *this);
 static bool ymString_StrCat (ymString_t *this, const unsigned char str[]);
 static bool ymString_StrCpy (ymString_t *this, const unsigned char str[]);
+static bool ymString_reverse(ymString_t *this);
 static bool ymString_append (ymString_t *this, unsigned char element);
+static bool ymString_DelChar (ymString_t *this, unsigned char ch);
 static void ymString_destructor (ymString_t *this);
 
 typedef struct {
@@ -55,7 +57,9 @@ typedef struct {
     bool    (*const gets)       (ymString_t*);
     bool    (*const cat)        (ymString_t*, const unsigned char[]);
     bool    (*const cpy)        (ymString_t*, const unsigned char[]);
+    bool    (*const reverse)    (ymString_t*);
     bool    (*const append)     (ymString_t*, const unsigned char);
+    bool    (*const delChar)    (ymString_t*, unsigned char );
     void    (*const destruct)   (ymString_t*);
 } ymString_fun;
 
@@ -163,7 +167,7 @@ static bool ymString_puts (const ymString_t *const this)
     puts( (char *)this->ptr);
     return true;
     EmptyError:
-    fprintf( stderr, "Error %s %s: ymString_empty string error", __FILE__, __FUNCTION__ );
+    fprintf( stderr, "Error %s %s: empty string error\n", __FILE__, __FUNCTION__ );
     return false;
 }
 
@@ -187,7 +191,7 @@ static bool ymString_StrCat (ymString_t *this, const unsigned char str[])
     return true;
 
     ReAllocError:
-    fprintf( stderr, "Error %s %s: reallocate error", __FILE__, __FUNCTION__);
+    fprintf( stderr, "Error %s %s: reallocate error\n", __FILE__, __FUNCTION__);
     goto finally;
     finally:
     exit(EXIT_FAILURE);
@@ -208,7 +212,26 @@ static bool ymString_StrCpy (ymString_t *this, const unsigned char str[])
     return true;
 
     MallocError:
-    fprintf( stderr, "Error %s %s: malloc error", __FILE__, __FUNCTION__);
+    fprintf( stderr, "Error %s %s: malloc error\n", __FILE__, __FUNCTION__);
+    goto finally;
+    finally:
+    exit(EXIT_FAILURE);
+}
+
+static bool ymString_reverse(ymString_t *const this)
+{
+    if (ymString_empty(this)) goto EmptyStringError;
+    unsigned char *first = this->ptr, *last = this->ptr + this->length;
+    while (first != last && first != --last) {
+        *(first) ^= *(last);
+        *(last)  ^= *(first);
+        *(first) ^= *(last);
+        first += 1;
+    }
+    return true;
+
+    EmptyStringError:
+    fprintf( stderr, "Error %s  %s: empty string error\n", __FILE__,  __FUNCTION__ );
     goto finally;
     finally:
     exit(EXIT_FAILURE);
@@ -233,6 +256,36 @@ static bool ymString_append (ymString_t *const this, const unsigned char element
 
     ReAllocError:
     fprintf( stderr, "Error %s %s: reallocate error\n", __FILE__, __FUNCTION__ );
+    goto finally;
+    finally:
+    exit(EXIT_FAILURE);
+}
+
+static bool ymString_DelChar (ymString_t *const this, unsigned char ch)
+{
+    if (ymString_empty(this)) goto EmptyStringError;
+    else;
+    unsigned char *tmp_string = (unsigned char *) malloc(sizeof (unsigned char) * this->capacity);
+    if (tmp_string == NULL) goto MallocError;
+    else;
+    memset(tmp_string, '\0', this->capacity);
+
+    for (size_t i = 0, j = 0; i < this->length; ++i) {
+        if (*(this->ptr + i) != ch) {
+            *(tmp_string + j++) = *(this->ptr + i);
+        } else;
+    }
+    this->length = strlen((char *)tmp_string);
+    free(this->ptr);
+    this->ptr = tmp_string;
+    tmp_string = NULL;
+    return true;
+
+    EmptyStringError:
+    fprintf( stderr, "Error %s %s: empty string error\n", __FILE__, __FUNCTION__ );
+    goto finally;
+    MallocError:
+    fprintf( stderr, "Error %s %s: malloc error\n", __FILE__, __FUNCTION__);
     goto finally;
     finally:
     exit(EXIT_FAILURE);
