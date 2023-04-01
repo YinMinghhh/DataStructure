@@ -52,9 +52,9 @@ static ReversePolishNotation_t* ReversePolishNotation_init(ReversePolishNotation
     this->prefix_expression     =   NULL;
     this->op_stack  =   NULL;
     this->res_stack =   NULL;
-    this->infix_expression      =   ymString.init(this->infix_expression, 20);
-    this->postfix_expression    =   ymString.init(this->postfix_expression, 30);
-    this->prefix_expression     =   ymString.init(this->prefix_expression, 30);
+    this->infix_expression      =   ymString.init(this->infix_expression, 100);
+    this->postfix_expression    =   ymString.init(this->postfix_expression, 50);
+    this->prefix_expression     =   ymString.init(this->prefix_expression, 50);
     this->op_stack  =   ymStack(uint8).init(this->op_stack);
     this->res_stack =   ymStack(double).init(this->res_stack);
     return this;
@@ -78,14 +78,16 @@ static double ReversePolishNotation_solve(ReversePolishNotation_t *const this)
 {
     if (ymString.empty(this->postfix_expression)) goto EmptyPostfixExpressionError;
     else;
-    unsigned char *ptr = this->postfix_expression->ptr;
-    char *p_ptr = NULL;
-    for (int i = 0; i < this->postfix_expression->length; ++i, ++ptr) {
-        unsigned char ch = *ptr;
+    char *tmp_ptr = NULL;
+    for (uint8 *ptr = this->postfix_expression->ptr;
+//    *ptr != '\0';
+    ptr < (this->postfix_expression->ptr + this->postfix_expression->length);
+    ++ptr) {
+        uint8 ch = *ptr;
         if (isdigit(ch) || ( (ch == '-' || ch =='+') && isdigit(*(ptr + 1)))) {
 //            对数字处理, 考虑特殊情况下带有正负号的数字
-            ymStack(double).push(this->res_stack, strtod((char*)ptr, &p_ptr));
-            ptr = (unsigned char *)p_ptr;
+            ymStack(double).push(this->res_stack, strtod((char*)ptr, &tmp_ptr));
+            ptr = (unsigned char *)tmp_ptr;
         } else if (ReversePolishNotation_priority(ch)) {
             double num2 = ymStack(double).pop(this->res_stack);
             double num1 = ymStack(double).pop(this->res_stack);
