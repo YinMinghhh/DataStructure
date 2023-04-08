@@ -106,7 +106,7 @@ class Calculator:
         # print(temp_equ)
 
         # 调用C形成的可执行文件求解
-        solve = subprocess.Popen(([r"cmake-build-debug/DataStructure.exe", "-GUI", temp_equ]),
+        solve = subprocess.Popen(([r"cmake-build-debug/Calculator.exe", "-GUI", temp_equ]),
                                  stdin=None,
                                  stdout=subprocess.PIPE,
                                  stderr=None,
