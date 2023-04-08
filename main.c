@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     } else {
 //        无参调用
         while (1) {
-            printf("input infix expression: ");
+            printf("input infix expression:\n>>> ");
             ReversePolishNotation.gets(object);
             ReversePolishNotation.substitute(object);
             ymString.clear(object->postfix_expression, object->postfix_expression->capacity);
